@@ -38,6 +38,8 @@ import type {
   VerificationReading,
 } from "@unidpp/model";
 import type { CarFixture, LaptopFixture } from "@unidpp/model/fixtures";
+import type { PackRecord } from "./packs.ts";
+import { buildPackRecords } from "./packs.ts";
 
 // ---------------------------------------------------------------------------
 // Passport records
@@ -64,6 +66,8 @@ export interface World {
   allLinks: PassportLink[];
   /** Recall traversal from the car passport (SDK downstreamOf). */
   carDownstream: string[];
+  /** Tier-A pack fixtures with their graded slots (multi-suite honesty). */
+  packs: PackRecord[];
 }
 
 function linksFor(value: string, links: PassportLink[]): PassportLink[] {
@@ -558,8 +562,9 @@ export async function buildWorld(): Promise<World> {
 
   const carPassport = passports.find((p) => p.key === "car")!;
   const carDownstream = [...downstreamOf(allLinks, carPassport.manifest.passportId.value)];
+  const packs = await buildPackRecords();
 
-  return { passports, profilesById, registry, allLinks, carDownstream };
+  return { passports, profilesById, registry, allLinks, carDownstream, packs };
 }
 
 // ---------------------------------------------------------------------------

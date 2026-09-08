@@ -6,6 +6,7 @@ const world = await data.buildWorld();
 const pv = await server.ssrLoadModule("/src/views/passports.ts");
 const rv = await server.ssrLoadModule("/src/views/registry.ts");
 const tv = await server.ssrLoadModule("/src/views/transform.ts");
+const kv = await server.ssrLoadModule("/src/views/packs.ts");
 
 const pages = {
   list: pv.renderPassportList(world),
@@ -14,6 +15,7 @@ const pages = {
   battery: pv.renderPassportDetail(world, "battery"),
   registry: rv.renderRegistry(world),
   transform: tv.renderTransform(world),
+  packs: kv.renderPacks(world.packs),
 };
 
 let bad = 0;

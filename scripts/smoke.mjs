@@ -106,6 +106,50 @@ try {
   const transformHtml = transformView.renderTransform(world);
   check("transform view renders graph, ledger, notes", transformHtml.includes("Mass-balance ledger") && transformHtml.includes("svg") && transformHtml.includes("cell-lot-c75-2026b"));
   check("transform ledger balances", transformHtml.includes("98.3") && transformHtml.includes("96.8"));
+
+  // Tier-A packs (multi-suite honesty): the co-signed pack verifies its
+  // P-256 slot and defers the SM2 slot with a reason; the pure-SM2 pack
+  // degrades wholly — never a broken page.
+  check("two pack records load", world.packs.length === 2, world.packs.map((p) => p.key).join(", "));
+  const cosigned = world.packs.find((p) => p.key === "cosigned");
+  const pureSm2 = world.packs.find((p) => p.key === "pure-sm2");
+  check("co-signed pack verdict is degraded (P-256 verified, SM2 deferred)", cosigned.verdict.outcome === "degraded");
+  check(
+    "co-signed coverage: 1 of 2 slots verified, 0 failed, 1 deferred",
+    cosigned.verdict.coverage.signatures.total === 2 &&
+      cosigned.verdict.coverage.signatures.verified === 1 &&
+      cosigned.verdict.coverage.signatures.failed === 0 &&
+      cosigned.verdict.coverage.signatures.unsupported === 1,
+  );
+  check(
+    "co-signed per-slot grades: ecdsa-p256 verified, sm2 deferred",
+    cosigned.slots.some((s) => s.framing.suite === "ecdsa-p256-sha256" && s.check.kind === "verified") &&
+      cosigned.slots.some((s) => s.framing.suite === "sm2-sm3" && s.check.kind === "deferred"),
+  );
+  check(
+    "SM2 deferral carries the documented reason",
+    cosigned.slots.find((s) => s.framing.suite === "sm2-sm3").check.reason.includes("GM/T 0003"),
+  );
+  check("pure-SM2 pack degrades wholly", pureSm2.verdict.outcome === "degraded");
+  check(
+    "pure-SM2 whole-degradation finding names the suite",
+    pureSm2.verdict.findings.some((f) => f.code === "no-computed-suite" && f.message.includes("no anchor/computed suite for sm2-sm3 in this build")),
+  );
+  check("pure-SM2 has no error findings (degraded, not failed)", pureSm2.verdict.findings.every((f) => f.severity !== "error"));
+
+  const packsView = await server.ssrLoadModule("/src/views/packs.ts");
+  const packsHtml = packsView.renderPacks(world.packs);
+  check("packs view renders both packs", packsHtml.includes("Co-signed pack") && packsHtml.includes("Pure-SM2 pack"));
+  check(
+    "packs view shows the P-256 slot verified and the SM2 slot deferred with reason",
+    packsHtml.includes("ecdsa-p256-sha256") &&
+      packsHtml.includes("sm2-sm3") &&
+      packsHtml.includes(">verified<") &&
+      packsHtml.includes(">deferred<") &&
+      packsHtml.includes("GM/T 0003"),
+  );
+  check("packs view shows the whole-degradation finding for the pure-SM2 pack", packsHtml.includes("no-computed-suite"));
+  check("packs view states the browser limitation", packsHtml.includes("CN-capable terminal"));
 } catch (err) {
   failures++;
   console.error("FAIL data pipeline threw:", err);

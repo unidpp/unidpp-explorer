@@ -16,6 +16,7 @@ import type { World } from "./data.ts";
 import { renderPassportDetail, renderPassportList } from "./views/passports.ts";
 import { bindRegistry, renderRegistry } from "./views/registry.ts";
 import { renderTransform } from "./views/transform.ts";
+import { renderPacks } from "./views/packs.ts";
 import { esc } from "./fmt.ts";
 
 const app = document.querySelector<HTMLElement>("#app");
@@ -23,6 +24,7 @@ let world: World | undefined;
 
 const NAV: Array<{ href: string; label: string; match: (route: string) => boolean }> = [
   { href: "#/", label: "Passports", match: (r) => r === "/" || r.startsWith("/passport") },
+  { href: "#/packs", label: "Packs", match: (r) => r === "/packs" },
   { href: "#/registry", label: "Registry", match: (r) => r === "/registry" },
   { href: "#/transform", label: "Transform", match: (r) => r === "/transform" },
 ];
@@ -44,7 +46,7 @@ function shell(route: string, bodyHtml: string): string {
 </header>
 <main id="main">${bodyHtml}</main>
 <footer class="site-foot">
-  <span>Fixtures: @unidpp/model (laptop, car). Commitments and chains recomputed in the browser with WebCrypto SHA-256.</span>
+  <span>Fixtures: @unidpp/model (laptop, car) and @unidpp/verify (Tier-A packs). Commitments, chains, and P-256 signatures verified in the browser with WebCrypto.</span>
   <a href="https://www.unidpp.org/">unidpp.org</a>
   <a href="https://github.com/unidpp">github.com/unidpp</a>
 </footer>`;
@@ -67,6 +69,8 @@ function render(): void {
     body = renderPassportList(world);
   } else if (r.startsWith("/passport/")) {
     body = renderPassportDetail(world, r.slice("/passport/".length));
+  } else if (r === "/packs") {
+    body = renderPacks(world.packs);
   } else if (r === "/registry") {
     body = renderRegistry(world);
   } else if (r === "/transform") {
