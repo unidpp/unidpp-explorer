@@ -23,6 +23,10 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 22
+      # unidpp-ts is a workspace: its own install links @unidpp/model
+      # for the verify package the explorer's build compiles through.
+      - run: npm install
+        working-directory: unidpp-ts
       - run: npm install
       - run: npm test --if-present
       - run: npm run build
